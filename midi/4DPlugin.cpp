@@ -143,16 +143,36 @@ void CommandDispatcher (PA_long32 pProcNum, sLONG_PTR *pResult, PackagePtr pPara
 			MIDI_RESUME(pResult, pParams);
 			break;
 
+		case 5 :
+			MIDI_Is_running(pResult, pParams);
+			break;
+			
 	}
 }
 
 // ------------------------------------- MIDI -------------------------------------
 
+void MIDI_Is_running(sLONG_PTR *pResult, PackagePtr pParams)
+{
+	C_LONGINT Param1;
+	C_LONGINT returnValue;
+
+	Param1.fromParamAtIndex(pParams, 1);
+
+	NSTask *task = MIDI::taskGet(Param1);
+	
+	if(task)
+	{
+		returnValue.setIntValue([task isRunning]);
+	}
+
+	returnValue.setReturn(pResult);
+}
 
 void MIDI_Play(sLONG_PTR *pResult, PackagePtr pParams)
 {
 	C_TEXT Param1;
-	C_TEXT Param2;
+	ARRAY_TEXT Param2;
 	C_LONGINT returnValue;
 
 	Param1.fromParamAtIndex(pParams, 1);
@@ -173,12 +193,24 @@ void MIDI_Play(sLONG_PTR *pResult, PackagePtr pParams)
 			URLByAppendingPathComponent:@"timidity"]path];
 
 			NSString *path = Param1.copyPath();
-
-			NSArray *arguments = [NSArray arrayWithObjects:@"-c", configPath, path, nil];
+			NSMutableArray *arguments = [[NSMutableArray alloc]initWithObjects:@"-c", configPath, path, nil];
+		
+			uint32_t countArgs = Param2.getSize();
+		
+			for(uint32_t i = 0; i < countArgs; ++i)
+			{
+				NSString *v = Param2.copyUTF16StringAtIndex(i);
+				if([v length])
+					[arguments addObject:v];
+				[v release];
+			}
 		
 			NSTask *task = MIDI::taskCreate();
 		
 			[task setArguments: arguments];
+		
+			[arguments release];
+		
 			[task setLaunchPath:launchPath];
 			[task launch];
 	}
