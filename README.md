@@ -5,7 +5,7 @@ Tmidity wrapper plugin for OS X
 
 | carbon | cocoa | win32 | win64 |
 |:------:|:-----:|:---------:|:---------:|
-|🆗|🆗|🚫|🚫|
+|🆗|🆗|🆗|🆗|
 
 Commands
 ---
