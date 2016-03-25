@@ -1,5 +1,5 @@
 # 4d-plugin-midi
-Tmidity wrapper plugin for OS X
+Play MIDI files (Tmidity wrapper).
 
 ##Platform
 
