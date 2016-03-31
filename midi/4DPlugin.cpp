@@ -340,11 +340,22 @@ void MIDI_Play(sLONG_PTR *pResult, PackagePtr pParams)
 			_wsplitpath_s(windowsPath.c_str(), fDrive, fDir, fName, fExt);
 			std::wstring resourcesPath = fDrive;
 			resourcesPath += fDir;
-			std::wstring configPath = resourcesPath + L"Resources\\timidity\\timidity.cfg";			
+		
+			std::wstring currentDirectoryPath = resourcesPath + L"Resources\\timidity";
+		
+//			std::wstring configPath = resourcesPath + L"Resources\\timidity\\timidity.cfg";
+			std::wstring configPath = L"timidity.cfg";
+		
 			std::wstring arguments = L"\"";
 			arguments += windowsPath;
 			arguments += L"\\timidity.exe\" ";
+			arguments += L"\"";
 			arguments += (wchar_t *)Param1.getUTF16StringPtr();
+			//remove delimiter to avoid open-ended escape sequence
+			if(arguments.at(arguments.size() - 1) == L'\\')
+				arguments = arguments.substr(0, arguments.size() - 1);
+			arguments += L"\"";
+		
 			arguments += L" -c ";
 			arguments += configPath;
 			std::vector<wchar_t> buf(32768);
@@ -377,9 +388,9 @@ void MIDI_Play(sLONG_PTR *pResult, PackagePtr pParams)
 				NULL,
 				NULL,
 				FALSE,
-				NULL,//CREATE_NO_WINDOW, //|CREATE_UNICODE_ENVIRONMENT
+				NULL,	//CREATE_NO_WINDOW | CREATE_UNICODE_ENVIRONMENT
 				NULL,	//pointer to the environment block for the new process
-				NULL,	//full path to the current directory for the process
+				currentDirectoryPath.c_str(),
 				&si,
 				&pi
 				))
@@ -389,12 +400,20 @@ void MIDI_Play(sLONG_PTR *pResult, PackagePtr pParams)
 				}
 #else
 			NSURL *bundleURL = [MIDI::pluginBundle bundleURL];
+/*
 			NSString *configPath = [[[[[bundleURL
 			URLByAppendingPathComponent:@"Contents"]
 			URLByAppendingPathComponent:@"Resources"]
 			URLByAppendingPathComponent:@"timidity"]
 			URLByAppendingPathComponent:@"timidity.cfg"]path];
-
+ */
+ 			NSString *configPath = @"timidity.cfg";
+		
+ 			NSString *currentDirectoryPath = [[[[bundleURL
+			URLByAppendingPathComponent:@"Contents"]
+			URLByAppendingPathComponent:@"Resources"]
+			URLByAppendingPathComponent:@"timidity"]path];
+		
 			NSString *launchPath = [[[[bundleURL
 			URLByAppendingPathComponent:@"Contents"]
 			URLByAppendingPathComponent:@"MacOS"]
@@ -412,6 +431,8 @@ void MIDI_Play(sLONG_PTR *pResult, PackagePtr pParams)
 			}
 		
 			NSTask *task = MIDI::taskCreate();
+		
+			[task setCurrentDirectoryPath:currentDirectoryPath];
 		
 			[task setArguments: arguments];
 		
