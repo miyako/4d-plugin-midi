@@ -1,1 +1,0 @@
-﻿{"name":"MIDI","id":20000,"commands":[{"theme":"MIDI","syntax":"MIDI Play(&T;&Y):L"},{"theme":"MIDI","syntax":"MIDI ABORT(&L)"},{"theme":"MIDI","syntax":"MIDI SUSPEND(&L)"},{"theme":"MIDI","syntax":"MIDI RESUME(&L)"},{"theme":"MIDI","syntax":"MIDI Is running(&L):L"}]}
