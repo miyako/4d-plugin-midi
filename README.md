@@ -30,7 +30,7 @@ Optinally, you can pass any timidity argument to the 2nd paramter for ``MIDI Pla
 Example
 ---
 
-```
+```4d
   //pass command line options to tmidity 
 ARRAY TEXT($args;2)
 $args{1}:="F"
