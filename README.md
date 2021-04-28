@@ -8,7 +8,7 @@
 # 4d-plugin-midi
 Play MIDI files (TiMidity++ version 2.14.0 wrapper).
 
-no amd big sur bottle on [homebrew](https://formulae.brew.sh/formula/timidity)?
+no arm big sur bottle on [homebrew](https://formulae.brew.sh/formula/timidity)?
 
 ### Commands
 
