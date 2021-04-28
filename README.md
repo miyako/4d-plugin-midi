@@ -1,5 +1,5 @@
 ![version](https://img.shields.io/badge/version-16%2B-8331AE)
-![platform](https://img.shields.io/static/v1?label=platform&message=mac-intel%20|%20mac-arm%20|%20win-64&color=blue)
+![platform](https://img.shields.io/static/v1?label=platform&message=mac-intel%20|%20win-64&color=blue)
 [![license](https://img.shields.io/github/license/miyako/4d-plugin-midi)](LICENSE)
 ![downloads](https://img.shields.io/github/downloads/miyako/4d-plugin-midi/total)
 
@@ -7,6 +7,8 @@
 
 # 4d-plugin-midi
 Play MIDI files (TiMidity++ version 2.14.0 wrapper).
+
+no amd big sur bottle on [homebrew](https://formulae.brew.sh/formula/timidity)?
 
 ### Commands
 
