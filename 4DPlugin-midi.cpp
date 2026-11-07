@@ -37,7 +37,7 @@ std::mutex mutexTasks;
 
 /*
  
- taskDeleteAll,taskGet,taskSet,taskCreate
+ taskDeleteAll,taskSet,taskCreate,taskDelete
  taskSuspend,taskResume
  
  */
@@ -77,42 +77,22 @@ void taskDeleteAll()
     for (auto it = MIDI::tasks.begin(); it != MIDI::tasks.end(); ++it)
     {
         NSTask *task = it->second;
-        
+
         if([task isRunning])
             [task terminate];
+
+        [task release];
     }
     MIDI::tasks.clear();
 }
 #endif
 
-#if VERSIONWIN
-HANDLE taskGet(C_LONGINT &index)
-{
-    std::lock_guard<std::mutex> lock(mutexTasks);
-    
-    HANDLE task = NULL;
-    std::map<DWORD, MIDI::context *>::iterator pos = MIDI::tasks.find(index.getIntValue());
-    if(pos != MIDI::tasks.end())
-    {
-        MIDI::context *c = pos->second;
-        task = c->hProcess;
-    }
-    return task;
-}
-#else
-NSTask *taskGet(C_LONGINT &index)
-{
-    std::lock_guard<std::mutex> lock(mutexTasks);
-    
-    NSTask *task = NULL;
-    std::map<int, NSTask*>::iterator pos = MIDI::tasks.find(index.getIntValue());
-    if(pos != MIDI::tasks.end())
-    {
-        task = pos->second;
-    }
-    return task;
-}
-#endif
+/*
+ the commands are thread-safe (manifest.json), so another process can run
+ MIDI ABORT (taskDelete: close the handles / release the NSTask) at any time.
+ every function below therefore uses the task only while holding mutexTasks,
+ instead of looking it up under the lock and using it after unlocking.
+ */
 
 void taskSuspend(C_LONGINT &index)
 {
@@ -127,9 +107,13 @@ void taskSuspend(C_LONGINT &index)
         SuspendThread(c->hThread);
     }
 #else
-    NSTask *task = MIDI::taskGet(index);
-    if(task)
-        [task suspend];
+    std::lock_guard<std::mutex> lock(mutexTasks);
+
+    std::map<int, NSTask*>::iterator pos = MIDI::tasks.find(index.getIntValue());
+    if(pos != MIDI::tasks.end())
+    {
+        [pos->second suspend];
+    }
 #endif
 }
 
@@ -146,29 +130,38 @@ void taskResume(C_LONGINT &index)
         ResumeThread(c->hThread);
     }
 #else
-    NSTask *task = MIDI::taskGet(index);
-    if(task)
-        [task resume];
+    std::lock_guard<std::mutex> lock(mutexTasks);
+
+    std::map<int, NSTask*>::iterator pos = MIDI::tasks.find(index.getIntValue());
+    if(pos != MIDI::tasks.end())
+    {
+        [pos->second resume];
+    }
 #endif
 }
 
 bool taskIsRunning(C_LONGINT &index)
 {
     bool isRunning = false;
-    
+
+    std::lock_guard<std::mutex> lock(mutexTasks);
+
 #if VERSIONWIN
-        
-    DWORD exitCode;
-    HANDLE h = MIDI::taskGet(index);
-    if (GetExitCodeProcess(h, &exitCode))
+
+    std::map<DWORD, MIDI::context *>::iterator pos = MIDI::tasks.find(index.getIntValue());
+    if(pos != MIDI::tasks.end())
     {
-        isRunning = (exitCode == STILL_ACTIVE);
-    };
+        DWORD exitCode;
+        if (GetExitCodeProcess(pos->second->hProcess, &exitCode))
+        {
+            isRunning = (exitCode == STILL_ACTIVE);
+        }
+    }
 #else
-    NSTask *task = MIDI::taskGet(index);
-    if(task)
+    std::map<int, NSTask*>::iterator pos = MIDI::tasks.find(index.getIntValue());
+    if(pos != MIDI::tasks.end())
     {
-        isRunning = [task isRunning];
+        isRunning = [pos->second isRunning];
     }
 #endif
     return isRunning;
@@ -401,6 +394,7 @@ void MIDI_Play(PA_PluginParameters params) {
             returnValue.setIntValue(pi.dwProcessId);
         }
 #else
+        @autoreleasepool {
         NSURL *bundleURL = [MIDI::pluginBundle bundleURL];
         /*
          NSString *configPath = [[[[[bundleURL
@@ -423,7 +417,8 @@ void MIDI_Play(PA_PluginParameters params) {
         
         NSString *path = Param1.copyPath();
         NSMutableArray *arguments = [[NSMutableArray alloc]initWithObjects:@"-c", configPath, path, nil];
-        
+        [path release];
+
         for(uint32_t i = 0; i < countArgs; ++i)
         {
             NSString *v = Param2.copyUTF16StringAtIndex(i);
@@ -442,6 +437,7 @@ void MIDI_Play(PA_PluginParameters params) {
         
         [task setLaunchPath:launchPath];
         [task launch];
+        }
 #endif
     }
     
