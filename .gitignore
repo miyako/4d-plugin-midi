@@ -1,0 +1,10 @@
+.DS_Store
+build/
+test/Data/Logs/
+test/Logs/
+test/userPreferences.*
+test/Project/DerivedData/
+/midi.dmg
+/midi.zip
+test/Plugins/midi.bundle/Contents/MacOS/midi
+test/Plugins/midi.bundle/Contents/_CodeSignature/
